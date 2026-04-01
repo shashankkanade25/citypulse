@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgis/postgis:14-3.4
+    container_name: citypulse-postgres
+    environment:
+      POSTGRES_DB: citypulse
+      POSTGRES_USER: citypulse
+      POSTGRES_PASSWORD: citypulse
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./initdb:/docker-entrypoint-initdb.d:ro
+
+volumes:
+  pgdata:

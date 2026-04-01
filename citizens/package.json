@@ -1,0 +1,40 @@
+{
+  "name": "citizens",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3001",
+    "build": "next build",
+    "start": "next start -p 5101",
+    "lint": "eslint",
+    "proxy": "next proxy"
+  },
+  "dependencies": {
+    "@clerk/nextjs": "^6.37.3",
+    "@upstash/kafka": "^1.3.5",
+    "bcryptjs": "^3.0.3",
+    "cloudinary": "^2.9.0",
+    "googleapis": "^171.4.0",
+    "jose": "^6.1.3",
+    "mongoose": "^9.1.6",
+    "next": "16.1.6",
+    "nodemailer": "^8.0.1",
+    "pg": "^8.18.0",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "svix": "^1.84.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^20",
+    "@types/nodemailer": "^7.0.9",
+    "@types/pg": "^8.11.10",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.6",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

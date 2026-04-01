@@ -1,0 +1,264 @@
+Admin UI should communicate:
+
+Authority
+
+Stability
+
+Integrity
+
+Seriousness
+
+❌ No gradients
+❌ No playful colors
+❌ No neumorphism / glassmorphism
+
+✅ Clean lines
+✅ High contrast
+✅ Readability first
+✅ Data over decoration
+
+🎨 Color Palette (Government-Grade)
+Primary Colors
+Purpose	Color	Hex
+Primary	Deep Navy	#0F172A
+Secondary	Slate Blue	#1E293B
+Surface	Soft Gray	#F8FAFC
+Border	Neutral Gray	#E2E8F0
+Status Colors (STRICT)
+Status	Color	Hex
+Open	Steel Blue	#2563EB
+In-Progress	Amber	#D97706
+On-Hold	Muted Gray	#64748B
+Resolved	Government Green	#15803D
+Critical	Deep Red	#B91C1C
+
+⚠️ Never reuse status colors for decoration.
+
+🖋️ Typography
+Font Stack
+font-family:
+  "Inter",
+  "Source Sans Pro",
+  system-ui,
+  -apple-system,
+  BlinkMacSystemFont;
+
+Font Usage
+Element	Size	Weight
+Page Title	20–24px	600
+Section Header	16px	600
+Body Text	14px	400
+Table Header	12px	600
+Meta Text	12px	400
+🧱 Layout Structure
+Overall Layout
+┌───────────────────────────────┐
+│ Top Bar (System / Admin Info) │
+├───────────┬───────────────────┤
+│ Sidebar   │ Main Content      │
+│ (Fixed)   │ (Scrollable)     │
+└───────────┴───────────────────┘
+
+Sidebar (Left, Fixed)
+
+Width: 240px
+
+Background: #0F172A
+
+Text: #CBD5E1
+
+Active item: Left border + darker background
+
+📁 Sidebar Navigation (Admin)
+Dashboard
+Incident Review
+Audit Logs
+User Oversight
+Analytics & Heatmaps
+Transparency Check
+System Settings
+Reports & Exports
+
+
+✔ Icons: Lucide / Heroicons (outline only)
+✔ No colorful icons
+
+📊 Dashboard Cards
+Card Style
+
+Background: #FFFFFF
+
+Border: 1px solid #E2E8F0
+
+Radius: 8px
+
+Shadow: very subtle
+
+Card Content
+
+Metric (large number)
+
+Label (small)
+
+Trend indicator (↑ ↓)
+
+Example:
+
+[ 124 ]
+Active Incidents
+↑ 12% from last week
+
+📋 Tables (MOST IMPORTANT)
+Table Style
+
+Zebra rows (very light)
+
+Sticky header
+
+Row hover highlight (subtle)
+
+No vertical grid lines
+
+Columns Example (Incidents)
+Incident ID	Category	Zone	Severity	Status	SLA	Action
+Status Badge Style
+
+Solid background
+
+White text
+
+Rounded (6px)
+
+Small, bold
+
+🧠 Forms & Modals (Admin Actions)
+Modal Rules
+
+Centered
+
+Max width: 480–640px
+
+No fullscreen modals
+
+Required Elements
+
+Clear title
+
+Explanation text
+
+Mandatory reason field
+
+Confirm + Cancel
+
+⚠️ Every admin action must require a reason field.
+
+🚨 Alerts & Warnings
+Type	Usage
+Critical	SLA breach, tampering
+Warning	Suspicious activity
+Info	System notices
+Success	Verified actions
+
+Style:
+
+Left colored border
+
+Neutral background
+
+No toast spam
+
+🗺️ Maps & Heatmaps
+
+Base map: grayscale
+
+Heat zones: red-amber scale
+
+No satellite view
+
+Tooltips only on hover
+
+Purpose:
+
+Data clarity, not visual appeal
+
+🧩 Component Rules (Strict)
+
+✔ Buttons:
+
+Primary: solid navy
+
+Secondary: outline
+
+Destructive: red outline only
+
+✔ Inputs:
+
+Border-based
+
+No floating labels
+
+Clear error messages
+
+✔ Icons:
+
+Functional only
+
+Never decorative
+
+🎛️ Dark Mode?
+
+🔴 NO (for Admin)
+
+Reason:
+
+Government dashboards prioritize clarity
+
+Dark mode increases misread risk in dense tables
+
+Citizen site can have it — Admin should not.
+
+🧠 UX Tone
+Aspect	Rule
+Animations	Minimal
+Transitions	≤ 150ms
+Feedback	Explicit
+Language	Formal, neutral
+Error text	Precise
+🏁 Example Admin Page Title Language
+
+✔ “Incident Verification Queue”
+✔ “System Audit Logs”
+✔ “Department Performance Review”
+✔ “Public Transparency Validation”
+
+❌ “Manage Stuff”
+❌ “Quick Actions”
+
+🧱 Tailwind Base Tokens (Example)
+colors: {
+  primary: "#0F172A",
+  secondary: "#1E293B",
+  surface: "#F8FAFC",
+  border: "#E2E8F0",
+  success: "#15803D",
+  warning: "#D97706",
+  danger: "#B91C1C"
+}
+
+🎯 FINAL ADMIN THEME SUMMARY
+
+Calm
+
+Serious
+
+Data-first
+
+Trust-driven
+
+Audit-ready
+
+Long-session friendly
+
+This UI tells the user:
+
+“This system cannot be gamed.”

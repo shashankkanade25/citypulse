@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CityPulse — Test Dashboard</title>
+<style>
+  :root {
+    --bg: #0f1117; --surface: #1a1d27; --card: #21242f;
+    --border: #2d3140; --text: #e4e6ed; --dim: #8b8fa3;
+    --accent: #6c5ce7; --accent-hover: #7d6ff0;
+    --green: #2ed573; --red: #ff4757; --yellow: #ffa502; --blue: #3498db;
+    --radius: 10px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height:100vh; }
+
+  /* ── Header ── */
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 28px; display:flex; align-items:center; justify-content:space-between; }
+  .logo { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+  .logo span { color: var(--accent); }
+  #health-badge { font-size: 13px; padding: 6px 14px; border-radius: 20px; cursor:pointer; transition: .2s; }
+  #health-badge.ok   { background: rgba(46,213,115,.12); color: var(--green); border: 1px solid rgba(46,213,115,.25); }
+  #health-badge.fail { background: rgba(255,71,87,.12);  color: var(--red);   border: 1px solid rgba(255,71,87,.25); }
+  #health-badge.load { background: rgba(255,165,2,.12);  color: var(--yellow); border: 1px solid rgba(255,165,2,.25); }
+
+  /* ── Layout ── */
+  .shell { display: flex; min-height: calc(100vh - 60px); }
+
+  /* Sidebar */
+  nav { width: 220px; background: var(--surface); border-right: 1px solid var(--border); padding: 18px 0; flex-shrink:0; }
+  nav button { display:flex; align-items:center; gap:10px; width:100%; padding:11px 22px; border:none; background:transparent; color:var(--dim); font-size:14px; cursor:pointer; text-align:left; transition:.15s; }
+  nav button:hover { color:var(--text); background: rgba(108,92,231,.08); }
+  nav button.active { color:var(--accent); background: rgba(108,92,231,.12); border-right: 3px solid var(--accent); font-weight:600; }
+  nav .sep { height:1px; background:var(--border); margin:10px 16px; }
+
+  /* Main */
+  main { flex:1; padding:28px 32px; overflow-y:auto; max-height:calc(100vh - 60px); }
+  .page { display:none; }
+  .page.active { display:block; }
+  h2 { font-size:20px; margin-bottom:6px; }
+  .subtitle { color:var(--dim); font-size:13px; margin-bottom:22px; }
+
+  /* Cards & Inputs */
+  .card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:16px; }
+  label { display:block; font-size:13px; color:var(--dim); margin-bottom:6px; font-weight:500; }
+  input[type=file], input[type=text], textarea, select {
+    width:100%; padding:10px 14px; background:var(--surface); border:1px solid var(--border);
+    border-radius:8px; color:var(--text); font-size:14px; outline:none; transition:.2s;
+  }
+  input:focus, textarea:focus, select:focus { border-color:var(--accent); }
+  textarea { resize:vertical; min-height:90px; font-family:inherit; }
+  .row { display:flex; gap:14px; flex-wrap:wrap; }
+  .row > * { flex:1; min-width:200px; }
+
+  /* Buttons */
+  .btn { display:inline-flex; align-items:center; gap:8px; padding:10px 22px; border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; transition:.2s; }
+  .btn-primary { background:var(--accent); color:#fff; }
+  .btn-primary:hover { background:var(--accent-hover); transform:translateY(-1px); }
+  .btn-primary:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+  .btn-secondary { background:var(--surface); color:var(--text); border:1px solid var(--border); }
+  .btn-secondary:hover { border-color:var(--accent); }
+
+  /* Output */
+  .output { background:#0b0d12; border:1px solid var(--border); border-radius:var(--radius); padding:18px; margin-top:16px; font-family:'Cascadia Code','Fira Code',monospace; font-size:13px; white-space:pre-wrap; word-break:break-word; max-height:450px; overflow-y:auto; line-height:1.6; color:#c8ccd4; }
+  .output:empty::before { content:'Response will appear here...'; color:#555; }
+  .spinner { display:inline-block; width:16px; height:16px; border:2px solid rgba(255,255,255,.3); border-top-color:#fff; border-radius:50%; animation:spin .6s linear infinite; margin-right:6px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  /* Image preview */
+  .img-preview { max-width:260px; max-height:200px; border-radius:8px; margin-top:10px; border:1px solid var(--border); display:none; }
+
+  /* Chat */
+  #chat-history { max-height:360px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; padding:14px; }
+  .msg { padding:10px 14px; border-radius:12px; max-width:80%; font-size:14px; line-height:1.5; word-wrap:break-word; }
+  .msg.user { background:var(--accent); color:#fff; align-self:flex-end; border-bottom-right-radius:4px; }
+  .msg.bot  { background:var(--surface); color:var(--text); align-self:flex-start; border-bottom-left-radius:4px; border:1px solid var(--border); }
+
+  /* Footer */
+  .page-footer { margin-top:30px; padding-top:14px; border-top:1px solid var(--border); font-size:12px; color:#555; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">City<span>Pulse</span> Dashboard</div>
+  <div id="health-badge" class="load" onclick="checkHealth()">&#x27F3; Checking...</div>
+</header>
+
+<div class="shell">
+<nav id="sidebar">
+  <button data-page="classify" class="active">&#x1F5BC; Classify Image</button>
+  <button data-page="pipeline">&#x26A1; Full Pipeline</button>
+  <button data-page="report">&#x1F4DD; Generate Report</button>
+  <div class="sep"></div>
+  <button data-page="chat">&#x1F4AC; Chatbot</button>
+  <div class="sep"></div>
+  <button data-page="team">&#x1F477; Assign Team</button>
+  <button data-page="zone">&#x1F4CD; Zone Analysis</button>
+  <button data-page="summary">&#x1F4CA; Summarize</button>
+  <div class="sep"></div>
+  <button data-page="health">&#x2764; Health Check</button>
+</nav>
+
+<main>
+
+<!-- ═══════ CLASSIFY ═══════ -->
+<div id="page-classify" class="page active">
+  <h2>Image Classification</h2>
+  <p class="subtitle">Upload an image of urban infrastructure — CLIP detects the issue type, severity, and confidence.</p>
+  <div class="card">
+    <label>Select Image</label>
+    <input type="file" id="cls-file" accept="image/*" onchange="previewImg(this,'cls-preview')">
+    <img id="cls-preview" class="img-preview">
+  </div>
+  <button class="btn btn-primary" onclick="doClassify()">Classify</button>
+  <div id="cls-out" class="output"></div>
+</div>
+
+<!-- ═══════ FULL PIPELINE ═══════ -->
+<div id="page-pipeline" class="page">
+  <h2>Classify + Report (Full Pipeline)</h2>
+  <p class="subtitle">One-click: image &rarr; classification &rarr; AI-generated maintenance report.</p>
+  <div class="card">
+    <label>Select Image</label>
+    <input type="file" id="pipe-file" accept="image/*" onchange="previewImg(this,'pipe-preview')">
+    <img id="pipe-preview" class="img-preview">
+  </div>
+  <div class="card">
+    <div class="row">
+      <div><label>Location (optional)</label><input type="text" id="pipe-loc" placeholder="e.g. Sector 12, Main Road"></div>
+      <div><label>Reporter (optional)</label><input type="text" id="pipe-reporter" placeholder="e.g. Vikram"></div>
+    </div>
+  </div>
+  <button class="btn btn-primary" onclick="doPipeline()">Run Full Pipeline</button>
+  <div id="pipe-out" class="output"></div>
+</div>
+
+<!-- ═══════ GENERATE REPORT ═══════ -->
+<div id="page-report" class="page">
+  <h2>Generate Report</h2>
+  <p class="subtitle">Pass classification JSON to Ollama &rarr; get a structured incident report.</p>
+  <div class="card">
+    <label>Classification JSON</label>
+    <textarea id="rpt-json" placeholder='{"issue_type":"pothole","severity":"high","confidence":87.5,"priority":"critical"}'></textarea>
+  </div>
+  <div class="card">
+    <div class="row">
+      <div><label>Location</label><input type="text" id="rpt-loc" placeholder="Downtown Blvd"></div>
+      <div><label>Reporter</label><input type="text" id="rpt-reporter" placeholder="Inspector Raj"></div>
+    </div>
+  </div>
+  <button class="btn btn-primary" onclick="doReport()">Generate</button>
+  <div id="rpt-out" class="output"></div>
+</div>
+
+<!-- ═══════ CHATBOT ═══════ -->
+<div id="page-chat" class="page">
+  <h2>CityPulse Chatbot</h2>
+  <p class="subtitle">Ask anything about urban infrastructure — AI assistant powered by llama3.</p>
+  <div class="card" style="padding:0;">
+    <div id="chat-history"></div>
+  </div>
+  <div style="display:flex;gap:10px;margin-top:10px;">
+    <input type="text" id="chat-input" placeholder="Type a message..." style="flex:1" onkeydown="if(event.key==='Enter')doChat()">
+    <button class="btn btn-primary" onclick="doChat()">Send</button>
+    <button class="btn btn-secondary" onclick="chatHistory=[];document.getElementById('chat-history').innerHTML=''">Clear</button>
+  </div>
+</div>
+
+<!-- ═══════ ASSIGN TEAM ═══════ -->
+<div id="page-team" class="page">
+  <h2>Team Assignment</h2>
+  <p class="subtitle">ML-scored recommendation for the best maintenance team to dispatch.</p>
+  <div class="card">
+    <div class="row">
+      <div>
+        <label>Department</label>
+        <select id="team-dept">
+          <option>Roads & Transport</option>
+          <option>Water Supply Department</option>
+          <option>Electrical Department</option>
+          <option>Parks & Environment</option>
+          <option>Drainage & Sewage</option>
+          <option>Traffic Management</option>
+          <option>Municipal Enforcement</option>
+          <option>Sanitation Department</option>
+          <option>Urban Maintenance</option>
+        </select>
+      </div>
+      <div>
+        <label>Severity</label>
+        <select id="team-sev">
+          <option>low</option><option>medium</option><option selected>high</option><option>critical</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="row">
+      <div><label>Category (optional)</label><input type="text" id="team-cat" placeholder="e.g. Pothole / Road Damage"></div>
+      <div><label>Location (optional)</label><input type="text" id="team-loc" placeholder="Zone B, Industrial Area"></div>
+    </div>
+  </div>
+  <button class="btn btn-primary" onclick="doTeam()">Assign Team</button>
+  <div id="team-out" class="output"></div>
+</div>
+
+<!-- ═══════ ZONE ANALYSIS ═══════ -->
+<div id="page-zone" class="page">
+  <h2>Zone Analysis</h2>
+  <p class="subtitle">Submit a list of incidents — get hotspot clusters and AI-driven insights.</p>
+  <div class="card">
+    <label>Incidents JSON Array</label>
+    <textarea id="zone-json" rows="8" placeholder='[
+  {"type":"pothole","location":"Zone A","severity":"high"},
+  {"type":"water_leak","location":"Zone A","severity":"critical"},
+  {"type":"crack","location":"Zone B","severity":"low"},
+  {"type":"pothole","location":"Zone A","severity":"medium"}
+]'></textarea>
+  </div>
+  <button class="btn btn-primary" onclick="doZone()">Analyze Zones</button>
+  <div id="zone-out" class="output"></div>
+</div>
+
+<!-- ═══════ SUMMARIZE ═══════ -->
+<div id="page-summary" class="page">
+  <h2>Incident Summary</h2>
+  <p class="subtitle">Submit grouped incidents &rarr; executive summary with trends and recommendations.</p>
+  <div class="card">
+    <label>Incidents JSON Array</label>
+    <textarea id="sum-json" rows="8" placeholder='[
+  {"type":"pothole","severity":"high","location":"Main St","date":"2025-01-15"},
+  {"type":"water_leak","severity":"critical","location":"Park Ave","date":"2025-01-16"},
+  {"type":"pothole","severity":"medium","location":"Elm St","date":"2025-01-16"}
+]'></textarea>
+  </div>
+  <button class="btn btn-primary" onclick="doSummary()">Summarize</button>
+  <div id="sum-out" class="output"></div>
+</div>
+
+<!-- ═══════ HEALTH ═══════ -->
+<div id="page-health" class="page">
+  <h2>Health Check</h2>
+  <p class="subtitle">Verify that CLIP model and Ollama are ready for inference.</p>
+  <button class="btn btn-primary" onclick="doHealthPage()">Check Now</button>
+  <div id="health-out" class="output"></div>
+</div>
+
+<div class="page-footer">CityPulse Test Dashboard v2.2 &mdash; For development &amp; testing only</div>
+</main>
+</div>
+
+<script>
+const API = 'http://localhost:8000';
+let chatHistory = [];
+
+/* ── Navigation ── */
+document.querySelectorAll('nav button').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('nav button').forEach(function(b) { b.classList.remove('active'); });
+    document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+    btn.classList.add('active');
+    document.getElementById('page-' + btn.dataset.page).classList.add('active');
+  });
+});
+
+/* ── Helpers ── */
+function previewImg(input, previewId) {
+  var img = document.getElementById(previewId);
+  if (input.files[0]) {
+    img.src = URL.createObjectURL(input.files[0]);
+    img.style.display = 'block';
+  }
+}
+
+function out(id, html) { document.getElementById(id).innerHTML = html; }
+function loading(id) { out(id, '<span class="spinner"></span> Processing — this may take a moment...'); }
+function pretty(obj) { return JSON.stringify(obj, null, 2); }
+function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+async function post(url, body, isForm) {
+  var opts = { method: 'POST' };
+  if (isForm) {
+    opts.body = body;
+  } else {
+    opts.headers = { 'Content-Type': 'application/json' };
+    opts.body = JSON.stringify(body);
+  }
+  var res = await fetch(API + url, opts);
+  if (!res.ok) {
+    var errText = await res.text();
+    throw new Error(res.status + ': ' + errText);
+  }
+  return res.json();
+}
+
+/* ── Health Badge ── */
+async function checkHealth() {
+  var badge = document.getElementById('health-badge');
+  badge.className = 'load';
+  badge.textContent = 'Checking...';
+  try {
+    var res = await fetch(API + '/health');
+    var d = await res.json();
+    if (d.status === 'ready') {
+      badge.className = 'ok';
+      badge.textContent = 'Systems Ready';
+    } else {
+      badge.className = 'fail';
+      badge.textContent = 'Degraded';
+    }
+  } catch (e) {
+    badge.className = 'fail';
+    badge.textContent = 'Offline';
+  }
+}
+
+/* ── Classify ── */
+async function doClassify() {
+  var file = document.getElementById('cls-file').files[0];
+  if (!file) return alert('Please select an image.');
+  loading('cls-out');
+  try {
+    var fd = new FormData();
+    fd.append('file', file);
+    var d = await post('/classify', fd, true);
+    out('cls-out', pretty(d));
+  } catch (e) { out('cls-out', 'Error: ' + e.message); }
+}
+
+/* ── Full Pipeline ── */
+async function doPipeline() {
+  var file = document.getElementById('pipe-file').files[0];
+  if (!file) return alert('Please select an image.');
+  loading('pipe-out');
+  try {
+    var fd = new FormData();
+    fd.append('file', file);
+    var loc = document.getElementById('pipe-loc').value;
+    var rep = document.getElementById('pipe-reporter').value;
+    if (loc) fd.append('location', loc);
+    if (rep) fd.append('reporter', rep);
+    var d = await post('/classify-and-report', fd, true);
+    out('pipe-out', pretty(d));
+  } catch (e) { out('pipe-out', 'Error: ' + e.message); }
+}
+
+/* ── Generate Report ── */
+async function doReport() {
+  var raw = document.getElementById('rpt-json').value.trim();
+  if (!raw) return alert('Enter classification JSON.');
+  loading('rpt-out');
+  try {
+    var cls = JSON.parse(raw);
+    var body = { classification: cls };
+    var loc = document.getElementById('rpt-loc').value;
+    var rep = document.getElementById('rpt-reporter').value;
+    if (loc) body.location = loc;
+    if (rep) body.reporter = rep;
+    var d = await post('/generate-report', body);
+    out('rpt-out', pretty(d));
+  } catch (e) { out('rpt-out', 'Error: ' + e.message); }
+}
+
+/* ── Chatbot ── */
+async function doChat() {
+  var input = document.getElementById('chat-input');
+  var msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  chatHistory.push({ role: 'user', content: msg });
+
+  var hist = document.getElementById('chat-history');
+  hist.innerHTML += '<div class="msg user">' + esc(msg) + '</div>';
+  hist.innerHTML += '<div class="msg bot" id="chat-loading"><span class="spinner"></span> Thinking...</div>';
+  hist.scrollTop = hist.scrollHeight;
+
+  try {
+    var d = await post('/chat', { message: msg });
+    var el = document.getElementById('chat-loading');
+    if (el) el.remove();
+    chatHistory.push({ role: 'assistant', content: d.reply });
+    hist.innerHTML += '<div class="msg bot">' + esc(d.reply) + '</div>';
+  } catch (e) {
+    var el2 = document.getElementById('chat-loading');
+    if (el2) el2.remove();
+    hist.innerHTML += '<div class="msg bot" style="color:var(--red)">Error: ' + esc(e.message) + '</div>';
+  }
+  hist.scrollTop = hist.scrollHeight;
+}
+
+/* ── Team Assignment ── */
+async function doTeam() {
+  loading('team-out');
+  try {
+    var d = await post('/assign-team', {
+      department: document.getElementById('team-dept').value,
+      severity: document.getElementById('team-sev').value,
+      category: document.getElementById('team-cat').value || '',
+      location: document.getElementById('team-loc').value || ''
+    });
+    out('team-out', pretty(d));
+  } catch (e) { out('team-out', 'Error: ' + e.message); }
+}
+
+/* ── Zone Analysis ── */
+async function doZone() {
+  var raw = document.getElementById('zone-json').value.trim();
+  if (!raw) return alert('Enter incidents JSON array.');
+  loading('zone-out');
+  try {
+    var incidents = JSON.parse(raw);
+    var d = await post('/zone-analysis', { incidents: incidents });
+    out('zone-out', pretty(d));
+  } catch (e) { out('zone-out', 'Error: ' + e.message); }
+}
+
+/* ── Summarize ── */
+async function doSummary() {
+  var raw = document.getElementById('sum-json').value.trim();
+  if (!raw) return alert('Enter incidents JSON array.');
+  loading('sum-out');
+  try {
+    var incidents = JSON.parse(raw);
+    var d = await post('/summarize-incidents', { incidents: incidents });
+    out('sum-out', pretty(d));
+  } catch (e) { out('sum-out', 'Error: ' + e.message); }
+}
+
+/* ── Health Page ── */
+async function doHealthPage() {
+  loading('health-out');
+  try {
+    var res = await fetch(API + '/health');
+    var d = await res.json();
+    out('health-out', pretty(d));
+  } catch (e) { out('health-out', 'Error: ' + e.message); }
+}
+
+/* ── Init ── */
+checkHealth();
+</script>
+</body>
+</html>
