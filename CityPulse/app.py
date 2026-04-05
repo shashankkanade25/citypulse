@@ -35,13 +35,21 @@ from typing import Optional
 
 import json
 import requests
-import torch
 from fastapi import FastAPI, File, UploadFile, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, StreamingResponse
 from PIL import Image
 from pydantic import BaseModel
-from transformers import CLIPProcessor, CLIPModel
+
+try:
+    import torch
+    from transformers import CLIPProcessor, CLIPModel
+    ML_AVAILABLE = True
+except ImportError:
+    torch = None
+    CLIPProcessor = None
+    CLIPModel = None
+    ML_AVAILABLE = False
 
 # Load local env vars (optional). This lets CityPulse read CITYPULSE_MONGODB_URL
 # and CITYPULSE_MONGODB_DB from CityPulse/.env when running locally.
@@ -182,7 +190,10 @@ app.add_middleware(
 # ─────────────────────────────────────────────
 # CLIP MODEL (lazy-loaded)
 # ─────────────────────────────────────────────
-device = "cuda" if torch.cuda.is_available() else "cpu"
+if ML_AVAILABLE and torch and torch.cuda.is_available():
+    device = "cuda"
+else:
+    device = "cpu"
 clip_model = None
 clip_processor = None
 _clip_load_error = ""
@@ -195,6 +206,9 @@ def _ensure_clip_loaded() -> None:
     are not downloaded yet.
     """
     global clip_model, clip_processor, _clip_load_error
+    if not ML_AVAILABLE:
+        raise HTTPException(503, "ML modules (torch, transformers) are not installed.")
+
     if clip_model is not None and clip_processor is not None:
         return
 
@@ -630,6 +644,11 @@ async def debug_mongo_status():
 
 def clip_zero_shot(image: Image.Image, text_prompts: list[str]) -> list[float]:
     """Run CLIP zero-shot on GPU/CPU and return probability for each text prompt."""
+    if not ML_AVAILABLE:
+        # Fallback dummy probabilities if ML is missing (e.g. Vercel deployment)
+        prob = 100.0 / len(text_prompts)
+        return [round(prob, 2)] * len(text_prompts)
+
     _ensure_clip_loaded()
     inputs = clip_processor(text=text_prompts, images=image, return_tensors="pt", padding=True).to(device)
     with torch.no_grad(), torch.amp.autocast(device_type=device, enabled=(device == "cuda")):
