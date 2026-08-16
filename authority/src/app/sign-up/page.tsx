@@ -231,7 +231,7 @@ export default function SignUpPage() {
         <p className="text-center text-[#64748B] text-sm mt-6">
           Are you a citizen?{' '}
           <a
-            href={process.env.NEXT_PUBLIC_CITIZENS_URL || 'http://localhost:3000'}
+            href={process.env.NEXT_PUBLIC_CITIZENS_URL || 'https://citypulse-citizens-1.vercel.app/'}
             className="text-[#2563EB] hover:underline font-medium"
           >
             Go to Citizens Portal
